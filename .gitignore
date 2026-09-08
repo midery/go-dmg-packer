@@ -1,0 +1,10 @@
+# Build output.
+/dmg-packer
+/dmg-packer.exe
+/dist/
+
+# Local scratch.
+*.dmg
+
+# Instrument folders
+.idea
