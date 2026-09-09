@@ -8,11 +8,8 @@ import (
 
 // TestEncodeMatchesGolden pins the output byte for byte.
 //
-// The fixtures were captured from the previous implementation, which built
-// the container through `github.com/leaanthony/dmg/dsstore`. That output had
-// been checked against real Finder, so reproducing it exactly is what makes
-// dropping the dependency safe: this package is not a fresh reading of the
-// format, it is the same bytes from code we own.
+// The fixtures are output that has been checked against real Finder, so
+// reproducing them exactly is what keeps the encoder honest.
 //
 // A deliberate layout change means regenerating the fixtures, and it means
 // mounting the result and looking at the window before doing so.
