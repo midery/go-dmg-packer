@@ -4,3 +4,6 @@ Copyright 2026 go-dmg-packer authors
 This product includes software developed as part of the go-dmg-packer project.
 
 The disk-image format itself is implemented by `github.com/jetbrains/go-dmg-writer`.
+
+Portions of `internal/dsstore` are derived from `github.com/leaanthony/dmg`
+(MIT, Copyright (c) 2023 Lea Anthony).
