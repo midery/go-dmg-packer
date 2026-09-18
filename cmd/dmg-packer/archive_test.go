@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -109,6 +110,23 @@ func writeTemp(t *testing.T, name string, data []byte) string {
 	return path
 }
 
+// wantPerm checks the unix mode bits an entry was unpacked with. Windows
+// records none of them — a writable file stats as 0666 whatever the archive
+// said — so there the check is only that the file arrived.
+func wantPerm(t *testing.T, path string, want fs.FileMode) {
+	t.Helper()
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if runtime.GOOS == "windows" {
+		return
+	}
+	if perm := info.Mode().Perm(); perm != want {
+		t.Errorf("%s is %v, want %v", filepath.Base(path), perm, want)
+	}
+}
+
 // bundle is the entry set every format test unpacks.
 func bundle() []entry {
 	return []entry{
@@ -140,14 +158,7 @@ func TestResolveAppFormats(t *testing.T) {
 			if filepath.Base(app) != "Demo.app" {
 				t.Errorf("bundle is %q, want .../Demo.app", app)
 			}
-			exe := filepath.Join(app, "Contents/MacOS/Demo")
-			info, err := os.Stat(exe)
-			if err != nil {
-				t.Fatalf("stat executable: %v", err)
-			}
-			if info.Mode().Perm()&0o100 == 0 {
-				t.Errorf("executable came out %v, want the owner execute bit set", info.Mode().Perm())
-			}
+			wantPerm(t, filepath.Join(app, "Contents/MacOS/Demo"), 0o755)
 			plist, err := os.ReadFile(filepath.Join(app, "Contents/Info.plist"))
 			if err != nil || string(plist) != "plist" {
 				t.Errorf("Info.plist = %q, %v; want \"plist\"", plist, err)
@@ -175,20 +186,8 @@ func TestResolveAppZipWithoutModeBits(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolveApp: %v", err)
 	}
-	info, err := os.Stat(filepath.Join(app, "Contents/MacOS/Demo"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if info.Mode().Perm() != 0o755 {
-		t.Errorf("executable is %v, want 0755", info.Mode().Perm())
-	}
-	info, err = os.Stat(filepath.Join(app, "Contents/Info.plist"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if info.Mode().Perm() != 0o644 {
-		t.Errorf("resource is %v, want 0644", info.Mode().Perm())
-	}
+	wantPerm(t, filepath.Join(app, "Contents/MacOS/Demo"), 0o755)
+	wantPerm(t, filepath.Join(app, "Contents/Info.plist"), 0o644)
 }
 
 // __MACOSX sidecars must not reach the volume.
